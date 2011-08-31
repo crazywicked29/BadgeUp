@@ -1,0 +1,283 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head> 
+<title>BadgeUp</title> 
+	<link href="jquery-mobile/jquery.mobile-1.0b1.min.css" rel="stylesheet" type="text/css"/>
+	<script src="jquery-mobile/jquery-1.6.2.min.js" ></script>
+
+	<script src="assets/js/persistence.js"></script>
+	<script src="assets/js/persistence.store.sql.js"></script>
+    <script src="assets/js/persistence.store.websql.js"></script>
+	<script src="assets/js/persistence.store.memory.js"></script>
+  <!--
+  	<script src="assets/js/persistence.store.sqlite.js"></script>
+	-->    
+    
+     
+    <script>
+	
+		$(document).bind("mobileinit", function() {
+    		$.mobile.page.prototype.options.addBackBtn = true;
+		 	$.mobile.page.prototype.options.useFastClick = true;
+ 		});
+	
+		
+		if (window.openDatabase) {
+			persistence.store.websql.config(persistence, "badgeUp", 'BadgeUp', 2 * 1024 * 1024);
+		}
+		else {
+			persistence.store.memory.config(persistence);
+		}
+		
+		var attendeetbl = persistence.define('attendee', {
+			first_name: "TEXT",
+			last_name: "TEXT",
+			event_id: "TEXT"
+		});
+		
+	
+	 	persistence.schemaSync();
+            
+		window.attendeetbl = attendeetbl;
+	
+		
+        $(document).ready(function() {
+			
+			
+			$.ajax({	
+				url: 'http://www.eventbrite.com/json/event_list_attendees?app_key=A2E4KZOBOKYVM4WBIH&id=1849414649',
+				success: function(data)
+				{
+					
+					
+					//var obj = $.parseJSON(data['attendees']);
+					var obj = data['attendees'];		
+					
+					if (obj != null) 
+					{
+						
+						attendeetbl.all().count(null, function(result)
+						{
+							if(result == 0) 
+							{
+								for (var i = 0; i < obj.length; i++) 
+								{
+									console.log(obj[i]['attendee'].last_name);
+									var a = new attendeetbl(
+									{
+										first_name: obj[i]['attendee'].first_name,
+										last_name: obj[i]['attendee'].last_name,
+										event_id: obj[i]['attendee'].event_id	
+									});
+									persistence.add(a);
+									persistence.flush();
+								}
+								
+							}
+						});
+						
+					}			
+					
+				},
+				error: function(data)
+				{
+					alert('problem loading attendees.');
+   				}
+ 			});
+			
+			$('#alpha').live('pagecreate', function() 
+			{
+				$('#attendeeList').listview('refresh');
+			});
+			
+			$('.chooseAlpha').live('click',function(e)
+			{
+				loadAttendee(false,this.id);
+				return false;
+			});
+			
+			
+			$('#myBadge').live('click',function(e)
+			{
+				$.mobile.changePage("#home","fade",true,true);
+			});
+			
+			
+			
+			
+			$('.detail').live('click',function(e)
+			{
+				console.log($(this).html());
+				attendeetbl.load(this.id, function(results)
+				{	
+					var fName = results.first_name;
+					$('#first_name').html(fName.toUpperCase());
+					$('#last_name').html(results.last_name);
+				});
+				
+				return false;
+			});
+			
+			$('.create').live('click',function(e)
+			{
+				
+				$('#first_name').html($('.first_name').val());
+				$('#last_name').html($('.last_name').val());
+				
+				$('.last_name').val('');
+				$('.first_name').val('');
+				$.mobile.changePage("#detail","slideup",true,true);
+				return false;
+			});
+	
+        });
+		
+		
+        function loadAttendee(param,s) 
+		{
+			console.log('load attendee page');
+			$('#attendeeList').empty();
+			//$('#attendeeList').append('<li>Wines</li>');
+			attendeetbl.all().order("last_name", true).list(null, function(results){	
+				currLastName = '';
+				currFirstName = '';			
+				results.forEach(function(e){
+					
+					var str = e.last_name;
+					
+					if (str.indexOf(s) == 0 || str.indexOf(s.toLowerCase()) == 0) 
+					{
+						if(currFirstName.toLowerCase() != e.first_name.toLowerCase() && currLastName.toLowerCase() != e.last_name.toLowerCase())
+						{
+						$('#attendeeList').append("<li><a class='detail' href='#detail' id='" + e.id + "'>" + e.last_name + ", " + e.first_name +"</a></li>").listview('refresh');
+						}
+						currLastName = e.last_name;
+						currFirstName = e.first_name;
+					}
+					
+					
+					
+				});
+			});
+	
+		
+	 	 	
+       	}
+            
+			
+        function deleteAttendee() 
+		{
+			attendeetbl.all().order("name", false).list(null, function(results){				
+				results.forEach(function(e){
+					persistence.remove(e);
+				});
+			});
+			persistence.flush(null,function() {
+				$.mobile.changePage("#home","slideup",true,true);
+          		loadAttendee();	
+			});
+        }
+        
+  </script>
+   
+  <script src="jquery-mobile/jquery.mobile-1.0b1.js" ></script>
+  
+</head> 
+<body  style="width:300px;"> 
+
+
+
+<div data-role="page" id="home"  data-theme="a">
+
+	<div data-role="header">
+		<h1>BadgeUp</h1>
+        <a href="#new">New Reg</a>
+	</div><!-- /header -->
+
+	<div data-role="content" >	
+		<ul id="alphaList" data-role="listview" >
+        	<li><a href="#alpha" class="chooseAlpha" id="A">A</a></li>
+         	<li><a href="#alpha" class="chooseAlpha" id="B">B</a></li>
+          	<li><a href="#alpha" class="chooseAlpha" id="C">C</a></li>
+           	<li><a href="#alpha" class="chooseAlpha" id="D">D</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="E">E</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="F">F</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="G">G</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="H">H</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="I">I</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="J">J</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="K">K</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="L">L</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="M">M</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="N">N</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="O">O</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="P">P</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="Q">Q</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="R">R</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="S">S</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="T">T</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="U">U</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="V">V</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="W">W</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="X">X</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="Y">Y</a></li>
+            <li><a href="#alpha" class="chooseAlpha" id="Z">Z</a></li>
+        </ul>	
+	</div><!-- /content -->
+
+</div><!-- /page -->
+
+
+<div data-role="page" id="alpha"  data-theme="a">
+
+	<div data-role="header">
+		<h1>BadgeUp</h1>
+	</div><!-- /header -->
+
+	<div data-role="content" >
+		<ul id="attendeeList" data-role="listview" ></ul>	
+	</div><!-- /content -->
+
+</div><!-- /page -->
+
+
+<div data-role="page" id="new"  data-theme="a">
+
+	<div data-role="header">
+		<h1>BadgeUp</h1>
+	</div><!-- /header -->
+
+	<div data-role="content" >
+		
+        <form>
+            <input type="text" class="first_name" placeholder="First Name" />
+            <input type="text" class="last_name" placeholder="Last Name" />
+            <input type="button" value="create" class="create" />
+        </form>
+	</div><!-- /content -->
+
+</div><!-- /page -->
+
+
+<div id="detail" data-role="page"  data-theme="w">
+    <div data-role="content" style="width:400px;"  id="myBadge">
+    	
+        <div style="float:left;font-family:Verdana, Geneva, sans-serif;font-size:32px; text-align:center; padding-top:20px; vertical-align:middle;">
+        	
+        	<span id="first_name">SIDNEY</span>
+       		<br>
+            <span id="last_name">Maestre</span>
+           
+        </div>
+        <div style="float:right;">
+        <img src="images/x-logo.png"  height="50" vspace="20" >
+        </div>
+        <div style="clear:both;font-family:Verdana, Geneva, sans-serif;font-size:16px; text-align:center;padding-top:40px; vertical-align:middle;">
+         AT&T Mobile Hackathon 8/6/2011
+        </div>
+    </div>   
+</div>
+
+
+</body>
+</html>
