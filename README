@@ -1,0 +1,18 @@
+About
+I created this little app the ATT Hackathon at the PayPal HQ in Aug 2011.  We had 400 people registered and advance printing
+of badges always causes confusion.  
+
+So I created this in jQuery Mobile, and ran it on my Laptop Safari browser.  The label printer was the DYMO 450 and worked
+like a charm.  I went with the largest packing labels which double as badges.
+
+Since iPad AIR printing is limited on supported printers, I couldn't use that, but maybe in the future.
+
+Everything is hardcoded including the logos, title of event and date.  Also the event id i use to retrieve the attendee
+list from event brite is hard coded. I imagine this could all be dynamic with a little work.
+
+Also, this only ran in Safari, other browsers where throwing errors.
+
+Lastly, the attendee data is cached locally in the browser, adding a refresh button would be great for last minute
+registrants.  Because once it's cached, it doesn't hit the event brite server again.
+
+Fork Away!
