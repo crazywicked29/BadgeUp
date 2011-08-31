@@ -1,5 +1,5 @@
 About
-I created this little app the ATT Hackathon at the PayPal HQ in Aug 2011.  We had 400 people registered and advance printing
+I created this little app for the ATT Hackathon at the PayPal HQ in Aug 2011.  We had 400 people registered and advance printing
 of badges always causes confusion.  
 
 So I created this in jQuery Mobile, and ran it on my Laptop Safari browser.  The label printer was the DYMO 450 and worked
